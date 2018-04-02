@@ -10,28 +10,25 @@ import matplotlib.pyplot as plt
 class NonLinear(object):
     def __init__(self):
         self.eng = projectq.MainEngine()
-        self.qureg = self.eng.allocate_qureg(3)
+        self.qureg = self.eng.allocate_qureg(2)
         self.eng.flush()
         self.res = []
 
-    def cal_loss(self, phi):
-        input_wavefun = np.dot(Ry(2*phi).matrix, np.array([[1], [0]]))
-        wavefun = np.kron(np.kron(np.array([[1], [0]]), np.array([[1], [0]])), input_wavefun)
-        self.eng.backend.set_wavefunction(wavefun, self.qureg)
-
+    def cal_loss(self, phi, n):
+        wavefun_shape = np.zeros(2**(n + 1))
+        wavefun_shape[0] = 1
+        init_wavefun = wavefun_shape
+        self.eng.backend.set_wavefunction(init_wavefun, self.qureg)
+        Ry(2 * phi) | self.qureg[0]
         with Control(self.eng, self.qureg[0]):
-            Ry(2*phi) | self.qureg[1]
-        with Control(self.eng, self.qureg[1]):
-            H | self.qureg[2]
-        Rz(-np.pi / 2) | self.qureg[1]
-        with Control(self.eng, self.qureg[0]):
-            Ry(-2*phi) | self.qureg[1]
-
+            Y | self.qureg[1]
+        Rz(-np.pi / 2) | self.qureg[0]
+        Ry(-2 * phi) | self.qureg[0]
         self.eng.flush()
 
-        self.eng.backend.collapse_wavefunction([self.qureg[1]], [0])
-        result = self.eng.backend.get_probability('0', [self.qureg[2]])
-
+        self.eng.backend.collapse_wavefunction([self.qureg[0]], [0])
+        result = self.eng.backend.get_probability('0', [self.qureg[1]])
+        print(result)
         Measure | self.qureg
         return np.arccos(np.sqrt(result))
 
@@ -56,13 +53,34 @@ class MatrixCal(object):
         print(mat)
 
 
+# define a function that could construct the non-linear function with desired curve
+eng = projectq.MainEngine()
+
+def act_fun(x, n, eng):
+    """
+    :param x: input
+    :param n: a parameter determine the function shape
+    :return: non_liear function output
+    """
+
+
+
+
+
 if __name__ == '__main__':
     non_linear_cal = NonLinear()
-    for phi in np.arange(0, np.pi/2, 0.01):
-        non_linear_cal.res.append(non_linear_cal.cal_loss(phi))
-    plt.plot(non_linear_cal.res)
+    x = np.arange(0, np.pi/2, 0.05)
+    for phi in x:
+        non_linear_cal.res.append(non_linear_cal.cal_loss(phi, 1))
+    plt.scatter(x, non_linear_cal.res)
+    y_compare = np.arctan((np.tan(x))**2)
+    plt.plot(x, y_compare)
+    # put some labels
+    plt.xlabel('input')
+    plt.ylabel('output')
     plt.show()
 
     # phi = 0.3*np.pi
     # MatrixCal(phi)
+
 
