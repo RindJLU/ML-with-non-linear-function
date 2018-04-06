@@ -3,28 +3,64 @@
 import numpy as np
 import projectq
 from projectq.ops import H, X, Y, Measure, Ry, Rz
+import pickle
 from projectq.meta import Control
 import matplotlib.pyplot as plt
 
 
 class QtmClassifier(object):
     """only process two dimensional data"""
-    def __init__(self):
-        # self.x = [[np.pi / 2, 0], [np.pi / 2, np.pi], [0, np.pi / 2], [np.pi, np.pi / 2]]
-        self.x = [[[0, 1], [0, 0]], [[0, 1], [1, 0]], [[0, 0], [0, 1]], [[1, 0], [0, 1]]]
-        self.y = [0, 0, 1, 1]
-        self.nqubits = len(self.x[0])*len(self.x[0][0]) + 2
-        self.alpha = np.pi*np.random.rand(len(self.x[0]) + 1)  # the last one is the bios
-        self.init_wavefun = np.zeros(2 ** self.nqubits)
+    def __init__(self, x, y, n_qubits, epoch):
+        n = len(x)
+        self.train_x = x[0:(n - round(n / 6))]
+        self.train_y = y[0:(n - round(n / 6))]
+        self.test_x = x[(n - round(n / 6)):]
+        self.test_y = y[(n - round(n / 6)):]
+        self.epoch = epoch
+        self.n_qubits1data = n_qubits
+        self.n_qubits = len(self.train_x[0]) * n_qubits + 2
+        self.alpha = (np.pi / 2)*np.random.rand(len(self.train_x[0]) + 1)  # the last one is the bios
+        self.init_wavefun = np.zeros(len(self.train_x[0]) ** self.n_qubits)
         self.init_wavefun[0] = 1
 
         self.eng = projectq.MainEngine()
-        self.qureg = self.eng.allocate_qureg(self.nqubits)
+        self.qureg = self.eng.allocate_qureg(self.n_qubits)
         self.eng.flush()
+
+        self.data2theta(self.train_x)
+        self.data2theta(self.test_x)
         self.loss = []
 
-    def data2theta(self):
-        self.x = [[np.pi/2, 0], [np.pi/2, np.pi], [0, np.pi/2], [np.pi, np.pi/2]]
+    def data2theta(self, data):
+        """
+        this function mainly normalize the given data, so that the data could be stored in the wavefunction.
+        :return: None
+        """
+        # first normalize
+        encoded_data = []  # shape -- len(data), (n_qubits1data + 1） for every element: [[0 0 1 1 1], [1 0 0 1 1], norm]
+        for i in range(len(data[:])):
+            norm_temp = np.linalg.norm(data[i])
+            data[i] *= 1 / norm_temp
+            # encoded_vec = [(self.n_qubits1data * [0])] + [(self.n_qubits1data * [0])]  # manually choose two elements
+            encoded_vec = np.zeros([2, self.n_qubits1data]).tolist()
+            # here cannot just use len(self.data[0]) * [(self.n_qubits1data * [0])], since the two would be the same all
+            # the time like the function "copy"
+            encoded_vec.append(norm_temp)
+            for vec_index in range(len(data[i])):
+                # the following operation
+                temp = data[i, vec_index]
+                temp1 = data[i]
+                temp2 = int(round(data[i][vec_index] * (2**(self.n_qubits1data*3))))
+                vec_ele = bin(int(round(data[i][vec_index] * (2**(self.n_qubits1data*3)))))[2:]
+                if len(vec_ele) > 2 * self.n_qubits1data:
+                    cuted_bin_str = vec_ele[0:(len(vec_ele) - 2 * self.n_qubits1data)]
+                    for j in range(len(cuted_bin_str)):
+                        encoded_vec[vec_index][self.n_qubits1data - len(cuted_bin_str) + j] = int(cuted_bin_str[j])
+            encoded_data.append(encoded_vec)
+        if data.all() == self.train_x.all():
+            self.train_x = np.array(encoded_data)
+        elif data.all() == self.test_x.all():
+            self.test_x = np.array(encoded_data)
 
     def cal_loss(self, a_list, b_list):
         loss = 0
@@ -32,17 +68,32 @@ class QtmClassifier(object):
             loss += (a_list[i] - b_list[i])**2
         return loss
 
-    def active_fun(self):
-        y_sim = []
-        for data in self.x:
-            self.eng.backend.set_wavefunction(self.init_wavefun, self.qureg)
-            for w in range(len(data)): # represent the data with same weight
-                for i in range(len(data[0])):
-                    if data[w][i]:
-                        X | self.qureg[2 * w + i]
-                    with Control(self.eng, self.qureg[2 * w + i]):
-                        Ry(2 * self.alpha[w] / 2**i) | self.qureg[-2]
+    def active_fun(self, train_or_test):
+        """
 
+        :param train_or_test: bool, True or False
+        :return: loss
+        """
+        if train_or_test == 'train':
+            x_epoch = self.train_x
+            y_epoch = self.train_y
+            return_test_label = False
+        elif train_or_test == 'test':
+            x_epoch = self.test_x
+            y_epoch = self.test_y
+            return_test_label = True
+        else:
+            print('error!!!')
+
+        y_sim = []
+        for encoded_data in x_epoch:
+            self.eng.backend.set_wavefunction(self.init_wavefun, self.qureg)
+            for w in range(2):  # represent the data with same weight
+                for i in range(len(encoded_data[0])):
+                    if encoded_data[w][i]:
+                        X | self.qureg[self.n_qubits1data * w + i]
+                    with Control(self.eng, self.qureg[self.n_qubits1data * w + i]):
+                        Ry(2 * encoded_data[-1] * self.alpha[w] / 2**i) | self.qureg[-2]
             # add bios
             Ry(2 * self.alpha[-1]) | self.qureg[-2]
 
@@ -53,46 +104,54 @@ class QtmClassifier(object):
 
             Ry(-2 * self.alpha[-1]) | self.qureg[-2]
 
-            for w in range(len(data)): # represent the data with same weight
-                for i in range(len(data[0])):
-                    with Control(self.eng, self.qureg[2 * w + i]):
-                        Ry(-2 * self.alpha[w] / 2**i) | self.qureg[-2]
+            for w in range(2):  # represent the data with same weight
+                for i in range(len(encoded_data[0])):
+                    with Control(self.eng, self.qureg[self.n_qubits1data * w + i]):
+                        Ry(-2 * encoded_data[-1] * self.alpha[w] / 2**i) | self.qureg[-2]
 
             self.eng.flush()
-            self.eng.backend.collapse_wavefunction([self.qureg[-2]], [0])
+            # self.eng.backend.collapse_wavefunction([self.qureg[-2]], [0])
             result = self.eng.backend.get_probability('0', [self.qureg[-1]])
 
             Measure | self.qureg
             y_sim.append(np.arccos(np.sqrt(result))/(np.pi/2))
             # y_sim.append(result)
-        print(y_sim)
-        loss = self.cal_loss(self.y, y_sim)
-        return loss
+        loss = self.cal_loss(y_epoch, y_sim)
+        if return_test_label:
+            return loss, y_sim
+        else:
+            return loss
 
     def run(self):
-        delta_theta = 0.001
-        update_theta = 0.05
-        for iter in range(200):
+        delta_theta = 0.0001
+        update_theta = 0.002
+        for iter in range(self.epoch):  # print epochs
+            if (iter+1) % 5 == 0:
+                print('This is the {}th epoch'.format(iter + 1)), print('the loss is {}'.format(self.loss[-1]))
+
             for j in range(len(self.alpha)):
                 self.alpha[j] += delta_theta
-                loss_plus = self.active_fun()
+                loss_plus = self.active_fun('train')
                 self.alpha[j] += -2*delta_theta
-                loss_min = self.active_fun()
+                loss_min = self.active_fun('train')
 
                 # update
                 self.alpha[j] += delta_theta - update_theta*(loss_plus - loss_min)/(2*delta_theta)
-                self.loss.append(loss_plus)
+            self.loss.append(loss_plus)
 
     def test(self):
-        self.x = [[[0, 1], [0, 1]]]
-        loss = self.active_fun()
-        return loss
+        print('this is the test')
+        num_test = len(self.test_y)
+        loss, y_sim = self.active_fun('test')
+        loss = loss / num_test
+        print('the test loss is {}'.format(loss))
+        print(y_sim, self.test_y)
 
 
 class Classifier(object):
-    def __init__(self):
-        self.x = [[np.pi / 2, 0], [np.pi / 2, np.pi], [0, np.pi / 2], [np.pi, np.pi / 2]]
-        self.y = [0, 0, 1, 1]
+    def __init__(self, x, y):
+        self.x =x
+        self.y = y
         self.alpha = np.random.rand(3)
         self.loss = []
 
@@ -113,14 +172,13 @@ class Classifier(object):
             a = np.cos(z)**2+((np.cos(z))**4)*(np.sin(z))**2
             b = (np.cos(z))**2+((np.cos(z))**4)*(np.sin(z))**2+np.sin(z)**6
             y_sim.append(np.arccos(np.sqrt(a/b))/(np.pi/2))
-        print(y_sim)
         loss = self.cal_loss(self.y, y_sim)
         return loss
 
     def run(self):
-        delta_theta = 0.0001
-        update_theta = 0.005
-        for iter in range(50):
+        delta_theta = 0.00001
+        update_theta = 0.0001
+        for iter in range(1000):
             for j in range(len(self.alpha)):
                 self.alpha[j] += delta_theta
                 loss_plus = self.active_fun()
@@ -129,19 +187,35 @@ class Classifier(object):
 
                 # update
                 self.alpha[j] += delta_theta - update_theta * (loss_plus - loss_min) / (2 * delta_theta)
-                self.loss.append(loss_plus)
+            self.loss.append(loss_plus)
 
 
 if __name__ == '__main__':
-    A = QtmClassifier()
+    # import data
+    pkl_file = open('/home/yufeng/PycharmProjects/undergraduate thesis/non-linear/vector_like_info_OCR_10_100_2.pkl', 'rb')
+    data = np.array(pickle.load(pkl_file))
+    pkl_file.close()
+    mixed_data = np.zeros([200, 3])
+    mixed_data[:100, 0:2] = data[6, :, :]
+    mixed_data[100:, 0:2] = data[9, :, :]
+    mixed_data[100:, 2] = np.ones(100)  # represent 6 as 0, 9 as 1
+    np.random.shuffle(mixed_data)
+
+    A = QtmClassifier(mixed_data[0:30, 0:2], mixed_data[0:30, 2], 5, 50)
+    # A = Classifier(mixed_data[0:30, 0:2], mixed_data[0:30, 2])
+    # print(A.train_y)
     A.run()
+    print(A.alpha)
+    A.test()
+
+    # plot the picture
     plt.plot(A.loss)
     plt.xlabel('iterations')
     plt.ylabel('loss')
     plt.show()
-    print(A.alpha)
 
-# solotions
+
+# solutions
 
 # 900 iterations: [2.22887464 0.91296014 3.20649227]
 # corresponding y: [0.13345016159439585, 0.1068248414476267, 0.7863151870220224, 0.897513508358606] average 16% error
@@ -155,4 +229,13 @@ if __name__ == '__main__':
 # first success:
 # [0.46479099 2.83095792 3.05828674]
 # [0.014110351851995885, 0.01717800843828657, 0.9619506244678849, 0.9667178975425114]
+
+# the test loss is 0.1331819874405067 for 10 test data
+# [0.5137614471671018, 0.4189086854090739, 0.7833234142633081, 0.459393964363378, 0.7833234142633081,
+# 0.8323764390889591, 0.6047199264988363, 0.4506091869163517, 0.08591327708361007, 0.8253921289916818]
+# [0. 1. 1. 0. 1. 1. 1. 0. 0. 1.]
+
+# OCR
+# [0.9894346786671705, 0.07737197228271495, 0.1914173493323471, 0.17387539966295704, 0.07013300270042955]
+#  [1. 0. 0. 0. 0.]
 

@@ -64,9 +64,6 @@ def act_fun(x, n, eng):
     """
 
 
-
-
-
 if __name__ == '__main__':
     non_linear_cal = NonLinear()
     x = np.arange(0, np.pi/2, 0.05)
