@@ -66,15 +66,18 @@ def act_fun(x, n, eng):
 
 if __name__ == '__main__':
     non_linear_cal = NonLinear()
-    x = np.arange(0, np.pi/2, 0.05)
+    x = np.arange(-np.pi/2, np.pi/2, 0.05)
     for phi in x:
         non_linear_cal.res.append(non_linear_cal.cal_loss(phi, 1))
-    plt.scatter(x, non_linear_cal.res)
+    plt.scatter(x, non_linear_cal.res, label='Quantum non-linear result')
+    plt.legend()
     y_compare = np.arctan((np.tan(x))**2)
-    plt.plot(x, y_compare)
+    plt.plot(x, y_compare, label='non-linear function')
+    plt.legend()
     # put some labels
     plt.xlabel('input')
     plt.ylabel('output')
+    plt.title('Comparison between real function and quantum result')
     plt.show()
 
     # phi = 0.3*np.pi
