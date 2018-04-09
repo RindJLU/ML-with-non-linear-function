@@ -43,3 +43,4 @@ which means if collapse the wave function of ancilla qubits to
 <img src="http://chart.googleapis.com/chart?cht=tx&chl=\Large |0\rangle " style="border:none;">, by measuring output qubits,
 we could get the desired non-linear function.
 
+

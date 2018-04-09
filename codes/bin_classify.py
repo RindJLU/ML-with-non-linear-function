@@ -249,7 +249,7 @@ if __name__ == '__main__':
 
     input_x = mixed_data[0:30, 0:2]
     input_y = mixed_data[0:30, 2]
-    A = QtmClassifier(input_x, input_y, 7, 50)
+    A = QtmClassifier(input_x, input_y, 5, 20)
     # A = Classifier(mixed_data[0:90, 0:2], mixed_data[0:90, 2])
     # print(A.train_y)
     A.run()
