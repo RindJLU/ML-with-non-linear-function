@@ -58,6 +58,8 @@ stripe. For 2*2 block, there are four possibilities:
 here we encoded the blocks as follows:
 (pi/4, 0), (pi/4, pi/2), (0, pi.4), (pi/2, pi/4)
 
+![2 by 2](https://github.com/RindJLU/ML-with-non-linear-function/blob/master/pictures/2%20by%202%20block%20encoded%20data.png)
+
 result:
 
 #### 4. Generalization 
