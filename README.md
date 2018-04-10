@@ -63,7 +63,11 @@ We first test the hand-write data in MNIST, we encoded every figure by two param
 pixels divided by number of right half pixels). However, because the data in MNIST is 28 by 28, so the features are not very 
 distinct. In light of this, I choose another datasets: xxxxxxxxxxxxx, whose hand-write figures are sized 128*128.
 the encoded data are plotted as follows:
+
 ![029](https://github.com/RindJLU/ML-with-non-linear-function/blob/master/pictures/Dist_029.png)
 ![6and9](https://github.com/RindJLU/ML-with-non-linear-function/blob/master/pictures/DIST_6_9.png)
 
+result:
 
+![result1](https://github.com/RindJLU/ML-with-non-linear-function/blob/master/pictures/Qtm_result_30train_sets_50epoch_6.png)
+![result2](https://github.com/RindJLU/ML-with-non-linear-function/blob/master/pictures/Qtm_result_30train_sets_30epoch_5.png)
