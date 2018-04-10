@@ -60,7 +60,14 @@ here we encoded the blocks as follows:
 
 ![2 by 2](https://github.com/RindJLU/ML-with-non-linear-function/blob/master/pictures/2%20by%202%20block%20encoded%20data.png)
 
-result:
+result(with 200 epoch):
+
+loss 
+
+![loss_stripe_classify](https://github.com/RindJLU/ML-with-non-linear-function/blob/master/pictures/first%20success.png)
+
+theta: [0.46479099 2.83095792 3.05828674]\
+result: [0.014110351851995885, 0.01717800843828657, 0.9619506244678849, 0.9667178975425114] vs [0, 0, 1, 1] 
 
 #### 4. Generalization 
 We first test the hand-write data in MNIST, we encoded every figure by two parameters, horizontal ratio(number of left half
