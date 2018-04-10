@@ -43,4 +43,25 @@ which means if collapse the wave function of ancilla qubits to
 <img src="http://chart.googleapis.com/chart?cht=tx&chl=\Large |0\rangle " style="border:none;">, by measuring output qubits,
 we could get the desired non-linear function.
 
+The quantum circuit is as follows:
+(picture)
+
+the quantum circuit result and the theoretical result:
+(picture)
+
+#### 3. Test the non-linearity of the quantum circuits
+To test the non-linearity of the circuits, let's consider a simple classification problem, horizontal stripe or vertical 
+stripe. For 2*2 block, there are four possibilities:
+(picture)
+here we encoded the blocks as follows:
+()
+
+result:
+
+#### 4. Generalization 
+We first test the hand-write data in MNIST, we encoded every figure by two parameters, horizontal ratio(number of left half
+pixels divided by number of right half pixels). However, because the data in MNIST is 28 by 28, so the features are not very 
+distinct. In light of this, I choose another datasets: xxxxxxxxxxxxx, whose hand-write figures are sized 128*128.
+the encoded data are plotted as follows:
+
 
