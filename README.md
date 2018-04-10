@@ -52,7 +52,9 @@ the quantum circuit result and the theoretical result:
 #### 3. Test the non-linearity of the quantum circuits
 To test the non-linearity of the circuits, let's consider a simple classification problem, horizontal stripe or vertical 
 stripe. For 2*2 block, there are four possibilities:
+
 ![2by2block](https://github.com/RindJLU/ML-with-non-linear-function/blob/master/pictures/FireShot%20Capture%205%20-%20down.php%20(1068%C3%971205)_%20-%20https___mails.jlu.edu.cn_down.php.png)
+
 here we encoded the blocks as follows:
 (pi/4, 0), (pi/4, pi/2), (0, pi.4), (pi/2, pi/4)
 
@@ -67,7 +69,7 @@ the encoded data are plotted as follows:
 ![029](https://github.com/RindJLU/ML-with-non-linear-function/blob/master/pictures/Dist_029.png)
 ![6and9](https://github.com/RindJLU/ML-with-non-linear-function/blob/master/pictures/DIST_6_9.png)
 
-result:
+results:
 
 ![result1](https://github.com/RindJLU/ML-with-non-linear-function/blob/master/pictures/Qtm_result_30train_sets_50epoch_6.png)
 ![result2](https://github.com/RindJLU/ML-with-non-linear-function/blob/master/pictures/Qtm_result_30train_sets_30epoch_5.png)
