@@ -43,11 +43,11 @@ which means if collapse the wave function of ancilla qubits to
 <img src="http://chart.googleapis.com/chart?cht=tx&chl=\Large |0\rangle " style="border:none;">, by measuring output qubits,
 we could get the desired non-linear function.
 
-The quantum circuit is as follows:
-(picture)
+The quantum circuit is as follows:\
+![circuits](https://github.com/RindJLU/ML-with-non-linear-function/blob/master/pictures/FireShot%20Capture%203%20-%20%20-%20https___arxiv.org_pdf_1711.11240.pdf.png)
 
-the quantum circuit result and the theoretical result:
-(picture)
+the quantum circuit result and the theoretical result:\
+![non-linear_fun](https://github.com/RindJLU/ML-with-non-linear-function/blob/master/pictures/non-linear%20function.png)
 
 #### 3. Test the non-linearity of the quantum circuits
 To test the non-linearity of the circuits, let's consider a simple classification problem, horizontal stripe or vertical 
